@@ -23,6 +23,8 @@ public class Main {
         System.out.println("3sum brute test (false): " + threeSumBrute(testArrayFalse));
         System.out.println("3sum fast test (true): " + threeSumFast(testArrayTrue));
         System.out.println("3sum fast test (false): " + threeSumFast(testArrayFalse));
+        System.out.println("3sum fastest test (true): " + threeSumFastest(testArrayTrue));
+        System.out.println("3sum fastest test (false): " + threeSumFastest(testArrayFalse));
     }
 
     //3sum problem: are there three numbers in this list that sum to 0?
@@ -52,7 +54,24 @@ public class Main {
     }
 
     //3sum fastest (N^2)
-    //private static boolean threeSumFastest(int[] array) {}
+    private static boolean threeSumFastest(int[] array) {
+        int len = array.length;
+        Arrays.sort(array);
+        for (int i = 0; i < len - 2; i++) {
+            int leftIndex = i + 1;
+            int rightIndex = len - 1;
+            while (leftIndex < rightIndex) {
+                int sum = array[i] + array[leftIndex] + array[rightIndex];
+                if (sum == 0)
+                    return true;
+                else if (sum > 0) //if the sum is > 0, reduce the size of the largest element
+                    rightIndex--;
+                else             //otherwise increase the size of the smallest element
+                    leftIndex++;
+            }
+        }
+        return false;
+    }
 
     //private static int[] generateUniqueArray(int count, int min, int max) {}
 
