@@ -1,30 +1,93 @@
 package com.company;
 
-import java.lang.management.ManagementFactory;
-import java.lang.management.ThreadMXBean;
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Random;
+import java.util.Set;
 
 public class Main {
 
     public static void main(String[] args) {
-        int nStart = 4;
+
+        int n;
+        int nStart = 512; //min 3
         int nSteps = 10;
         int nScale = 2;
         long startTime;
+        int maxTrials = 10;
+        int trialCount;
+        long maxTime = 3_000_000;
 
         long[] bruteTimes = new long[nSteps];
         long[] fastTimes = new long[nSteps];
         long[] fastestTimes = new long[nSteps];
 
-        int[] testArrayFalse = {-19, -14, -7, -2, 4, 7, 8, 23, 45};
-        int[] testArrayTrue = {-19, -14, -7, -2, 4, 6, 7, 8, 23, 45};
+        int[] array;
 
-        System.out.println("3sum brute test (true): " + threeSumBrute(testArrayTrue));
-        System.out.println("3sum brute test (false): " + threeSumBrute(testArrayFalse));
-        System.out.println("3sum fast test (true): " + threeSumFast(testArrayTrue));
-        System.out.println("3sum fast test (false): " + threeSumFast(testArrayFalse));
-        System.out.println("3sum fastest test (true): " + threeSumFastest(testArrayTrue));
-        System.out.println("3sum fastest test (false): " + threeSumFastest(testArrayFalse));
+        //brute force loop
+        n = nStart;
+        for (int i = 0; i < nSteps; i++) {
+            System.out.println("Brute n=" + n + " step=" + i);
+            bruteTimes[i] = 0;
+            for (trialCount = 0; (trialCount < maxTrials) && (bruteTimes[i] < maxTime); trialCount++) {
+                array = generateUniqueArray(n, -n * 2, n * 2);
+                startTime = System.nanoTime();
+                threeSumBrute(array);
+                bruteTimes[i] += System.nanoTime() - startTime;
+            }
+            n *= nScale;
+            bruteTimes[i] /= trialCount;
+        }
+
+
+        //fast loop
+        n = nStart;
+        for (int i = 0; i < nSteps; i++) {
+            System.out.println("Fast n=" + n + " step=" + i);
+            fastTimes[i] = 0;
+            for (trialCount = 0; (trialCount < maxTrials) && (fastTimes[i] < maxTime); trialCount++) {
+                array = generateUniqueArray(n, -n * 2, n * 2);
+                startTime = System.nanoTime();
+                threeSumFast(array);
+                fastTimes[i] += System.nanoTime() - startTime;
+            }
+            n *= nScale;
+            fastTimes[i] /= trialCount;
+        }
+
+        //fastest loop
+        n = nStart;
+        for (int i = 0; i < nSteps; i++) {
+            System.out.println("Fastest n=" + n + " step=" + i);
+            fastestTimes[i] = 0;
+            for (trialCount = 0; (trialCount < maxTrials) && (fastestTimes[i] < maxTime); trialCount++) {
+                array = generateUniqueArray(n, -n * 2, n * 2);
+                startTime = System.nanoTime();
+                threeSumFastest(array);
+                fastestTimes[i] += System.nanoTime() - startTime;
+            }
+            n *= nScale;
+            fastestTimes[i] /= trialCount;
+        }
+
+        String headerFormatString = "%6s|%13s%12s%15s|%13s%12s%15s|%13s%12s%15s|\n";
+        String tableFormatString =  "%6d|%13d%12.3f%15.3f|%13d%12.3f%15.3f|%13d%12.3f%15.3f|\n";
+        System.out.println("3sum results with nStart=" + nStart + ", nSteps=" + nSteps + ", maxTrials=" + maxTrials);
+        System.out.format(headerFormatString, "", "Brute 3sum", "", "", "Fast 3sum", "", "", "Fastest 3sum", "", "");
+        System.out.format(headerFormatString, "N",
+                "Time", nScale + "x Ratio", "Ex. " + nScale+"x Ratio",
+                "Time", nScale + "x Ratio", "Ex. " + nScale+"x Ratio",
+                "Time", nScale + "x Ratio", "Ex. " + nScale+"x Ratio");
+        n = nStart;
+        System.out.format(tableFormatString, n, bruteTimes[0], -1.0, -1.0, fastTimes[0], -1.0, -1.0, fastestTimes[0], -1.0, -1.0);
+        n *= nScale;
+        for (int i = 1; i < nSteps; i++) {
+            System.out.format(tableFormatString, n,
+                    bruteTimes[i], (double) bruteTimes[i] / bruteTimes[i-1], Math.pow(n, 3) / Math.pow(n/nScale, 3),
+                    fastTimes[i], (double) fastTimes[i] / fastTimes[i-1], (n*n*Math.log(n)) / (Math.pow(n/nScale, 2)*Math.log(n/nScale)),
+                    fastestTimes[i], (double) fastestTimes[i] / fastestTimes[i-1], Math.pow(n, 2) / Math.pow(n/nScale, 2));
+            n *= nScale;
+        }
     }
 
     //3sum problem: are there three numbers in this list that sum to 0?
@@ -73,10 +136,11 @@ public class Main {
         return false;
     }
 
-    //private static int[] generateUniqueArray(int count, int min, int max) {}
-
-    public static long getCpuTime() {
-        ThreadMXBean bean = ManagementFactory.getThreadMXBean();
-        return bean.isCurrentThreadCpuTimeSupported() ? bean.getCurrentThreadCpuTime() : 0L;
+    private static int[] generateUniqueArray(int count, int min, int max) {
+        Set<Integer> set = new HashSet<>();
+        Random r = new Random();
+        while (set.size() < count)
+            set.add(r.nextInt(max - min + 1) + min);
+        return set.stream().mapToInt(i -> i).toArray();
     }
 }
