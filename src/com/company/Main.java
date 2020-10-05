@@ -10,13 +10,13 @@ public class Main {
     public static void main(String[] args) {
 
         int n;
-        int nStart = 512; //min 3
-        int nSteps = 10;
+        int nStart = 32; //min 3
+        int nSteps = 24;
         int nScale = 2;
         long startTime;
-        int maxTrials = 10;
+        int maxTrials = 30;
         int trialCount;
-        long maxTime = 3_000_000;
+        long maxTime = 5_000_000_000L;
 
         long[] bruteTimes = new long[nSteps];
         long[] fastTimes = new long[nSteps];
@@ -27,7 +27,7 @@ public class Main {
         //brute force loop
         n = nStart;
         for (int i = 0; i < nSteps; i++) {
-            System.out.println("Brute n=" + n + " step=" + i);
+            System.out.print("Brute n=" + n + " step=" + i);
             bruteTimes[i] = 0;
             for (trialCount = 0; (trialCount < maxTrials) && (bruteTimes[i] < maxTime); trialCount++) {
                 array = generateUniqueArray(n, -n * 2, n * 2);
@@ -36,6 +36,7 @@ public class Main {
                 bruteTimes[i] += System.nanoTime() - startTime;
             }
             n *= nScale;
+            System.out.println(" TrialCount=" + trialCount);
             bruteTimes[i] /= trialCount;
         }
 
@@ -43,7 +44,7 @@ public class Main {
         //fast loop
         n = nStart;
         for (int i = 0; i < nSteps; i++) {
-            System.out.println("Fast n=" + n + " step=" + i);
+            System.out.print("Fast n=" + n + " step=" + i);
             fastTimes[i] = 0;
             for (trialCount = 0; (trialCount < maxTrials) && (fastTimes[i] < maxTime); trialCount++) {
                 array = generateUniqueArray(n, -n * 2, n * 2);
@@ -52,13 +53,14 @@ public class Main {
                 fastTimes[i] += System.nanoTime() - startTime;
             }
             n *= nScale;
+            System.out.println(" TrialCount=" + trialCount);
             fastTimes[i] /= trialCount;
         }
 
         //fastest loop
         n = nStart;
         for (int i = 0; i < nSteps; i++) {
-            System.out.println("Fastest n=" + n + " step=" + i);
+            System.out.print("Fastest n=" + n + " step=" + i);
             fastestTimes[i] = 0;
             for (trialCount = 0; (trialCount < maxTrials) && (fastestTimes[i] < maxTime); trialCount++) {
                 array = generateUniqueArray(n, -n * 2, n * 2);
@@ -67,25 +69,27 @@ public class Main {
                 fastestTimes[i] += System.nanoTime() - startTime;
             }
             n *= nScale;
+            System.out.println(" TrialCount=" + trialCount);
             fastestTimes[i] /= trialCount;
         }
 
-        String headerFormatString = "%6s|%13s%12s%15s|%13s%12s%15s|%13s%12s%15s|\n";
-        String tableFormatString =  "%6d|%13d%12.3f%15.3f|%13d%12.3f%15.3f|%13d%12.3f%15.3f|\n";
+        String headerFormatString = "%10s|%13s%12s%15s|%13s%12s%15s|%13s%12s%15s|\n";
+        String tableFormatString = "%10d|%13d%12.3f%15.3f|%13d%12.3f%15.3f|%13d%12.3f%15.3f|\n";
+        String firstTableFormatString = "%10d|%13d%12s%15s|%13d%12s%15s|%13d%12s%15s|\n";
         System.out.println("3sum results with nStart=" + nStart + ", nSteps=" + nSteps + ", maxTrials=" + maxTrials);
-        System.out.format(headerFormatString, "", "Brute 3sum", "", "", "Fast 3sum", "", "", "Fastest 3sum", "", "");
+        System.out.format(headerFormatString, "", "", "Brute 3sum", "", "", "Fast 3sum", "", "", "Fastest 3sum", "");
         System.out.format(headerFormatString, "N",
                 "Time", nScale + "x Ratio", "Ex. " + nScale+"x Ratio",
                 "Time", nScale + "x Ratio", "Ex. " + nScale+"x Ratio",
                 "Time", nScale + "x Ratio", "Ex. " + nScale+"x Ratio");
         n = nStart;
-        System.out.format(tableFormatString, n, bruteTimes[0], -1.0, -1.0, fastTimes[0], -1.0, -1.0, fastestTimes[0], -1.0, -1.0);
+        System.out.format(firstTableFormatString, n, bruteTimes[0], "N/A", "N/A", fastTimes[0], "N/A", "N/A", fastestTimes[0], "N/A", "N/A");
         n *= nScale;
         for (int i = 1; i < nSteps; i++) {
             System.out.format(tableFormatString, n,
-                    bruteTimes[i], (double) bruteTimes[i] / bruteTimes[i-1], Math.pow(n, 3) / Math.pow(n/nScale, 3),
-                    fastTimes[i], (double) fastTimes[i] / fastTimes[i-1], (n*n*Math.log(n)) / (Math.pow(n/nScale, 2)*Math.log(n/nScale)),
-                    fastestTimes[i], (double) fastestTimes[i] / fastestTimes[i-1], Math.pow(n, 2) / Math.pow(n/nScale, 2));
+                    bruteTimes[i], (double) bruteTimes[i] / bruteTimes[i-1], 2.0,
+                    fastTimes[i], (double) fastTimes[i] / fastTimes[i-1], 2.0,
+                    fastestTimes[i], (double) fastestTimes[i] / fastestTimes[i-1], 2.0);
             n *= nScale;
         }
     }
@@ -109,8 +113,8 @@ public class Main {
         Arrays.sort(array);
         for (int i = 0; i < len-2; i++)
             for (int k = i+1; k < len-1; k++) {
-                int result = Arrays.binarySearch(Arrays.copyOfRange(array, k+1, len), -array[i] - array[k]);
-                if (result >= 0) //check if key found, result is key index in sub-array (add k + 1)
+                int result = Arrays.binarySearch(array, -array[i] - array[k]);
+                if (result >= 0) //check if key found
                     return true;
             }
         return false;
